@@ -35,33 +35,25 @@ module.exports = function (filePath, opts) {
         var root = postcss.parse(fs.readFileSync(filePath));
         var map = {};
         root.eachRule(function (rule) {
-            var ruleDecls = '';
-            rule.eachDecl(function (decl) {
-                ruleDecls += decl.prop + decl.value;
-            });
-
             rule.selectors.forEach(function (selector) {
                 var id = makeId(rule, selector);
 
                 if (map[id] && (options.strict ? assertOnDecls(map[id], rule).length : true)) {
-                    return map[id].rules.push({
+                    return map[id].push({
                         selector: selector,
                         rule: rule
                     });
                 }
 
-                map[id] = {
-                    source: ruleDecls,
-                    rules: [{
-                        selector: selector,
-                        rule: rule
-                    }]
-                };
+                map[id] = [{
+                    selector: selector,
+                    rule: rule
+                }];
             });
         });
 
         var stuff = Object.keys(map).filter(function (selector) {
-            return map[selector].rules.length > 1;
+            return map[selector].length > 1;
         }).map(function (selectorName) {
             return map[selectorName];
         });
