@@ -20,7 +20,7 @@ function makeDeclsIntoArray(rule) {
 }
 
 function assertOnDecls(mapped, rule) {
-    var mappedDecl = makeDeclsIntoArray(mapped.rules[0].rule);
+    var mappedDecl = makeDeclsIntoArray(mapped[0].rule);
     var ruleDecl = makeDeclsIntoArray(rule);
 
     return _.intersection(mappedDecl, ruleDecl);
@@ -34,6 +34,7 @@ module.exports = function (filePath, opts) {
     return new Promise(function (res, rej) {
         var root = postcss.parse(fs.readFileSync(filePath));
         var map = {};
+
         root.eachRule(function (rule) {
             rule.selectors.forEach(function (selector) {
                 var id = makeId(rule, selector);
