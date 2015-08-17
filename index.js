@@ -59,27 +59,26 @@ module.exports = function (filePath, opts) {
         });
 
         var mapped = _.flatten(rules).reduce(function (map, rule) {
-            if (map[rule.id] && (options.strict ? assertOnDecls(map[rule.id], rule.rule).length : true)) {
+            var mappedValue = map[0];
+
+            if (mappedValue[rule.id] && (options.strict ? assertOnDecls(mappedValue[rule.id], rule.rule).length : true)) {
                 var overWrite = rule;
+                overWrite.rulesOverwritten = assertOnDecls(mappedValue[rule.id], rule.rule, true);
 
-                if (options.strict) {
-                    overWrite.rulesOverwritten = assertOnDecls(map[rule.id], rule.rule, true);
-                }
-
-                map[rule.id].push(rule);
+                mappedValue[rule.id].push(rule);
                 return map;
             }
 
-            map[rule.id] = [rule];
+            mappedValue[rule.id] = [rule];
             return map;
-        }, {});
+        }, [{}]).reduce(function (overall, map) {
+            return Object.keys(map).filter(function (selector) {
+                return map[selector].length > 1;
+            }).map(function (selectorName) {
+                return map[selectorName];
+            });
+        }, []);
 
-        var stuff = Object.keys(mapped).filter(function (selector) {
-            return mapped[selector].length > 1;
-        }).map(function (selectorName) {
-            return mapped[selectorName];
-        });
-
-        res(stuff);
+        res(mapped);
     });
 };
