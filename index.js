@@ -4,7 +4,6 @@ var Promise = require('bluebird');
 var postcss = require('postcss');
 var fs = require('fs');
 var _ = require('lodash');
-var colors = require('colors');
 
 function makeId(rule, selector, hash) {
     return [rule.parent.type, (rule.parent.params || 'root'), selector, hash || ''].join('-');
@@ -24,23 +23,24 @@ function makeDeclsIntoArray(rule) {
     return decls;
 }
 
-function assertOnDecls(mapped, rule, vals) {
+function toArray(root, method, functor) {
+    var arr = [];
+    root[method](function (rule) {
+        arr.push(rule);
+    });
+    return arr.map(functor);
+}
+
+function assertOnDecls(mapped, rule) {
     var mappedDecl = makeDeclsIntoArray(mapped[0].rule);
     var ruleDecl = makeDeclsIntoArray(rule);
     var intersect = _.intersection(mappedDecl, ruleDecl);
 
-    if (vals) {
-        var defs = [];
-        rule.eachDecl(function (decl) {
-            defs.push([decl.prop, decl.value]);
-        });
-
-        return defs.filter(function (def) {
-            return intersect.indexOf(def[0]) > -1;
-        });
-    }
-
-    return intersect;
+    return toArray(rule, 'eachDecl', function (decl) {
+        return [decl.prop, decl.value];
+    }).filter(function (def) {
+        return intersect.indexOf(def[0]) > -1;
+    });
 }
 
 module.exports = function (filePath, opts) {
@@ -50,60 +50,41 @@ module.exports = function (filePath, opts) {
 
     return new Promise(function (res) {
         var root = postcss.parse(fs.readFileSync(filePath));
-        var map = {};
 
-        root.eachRule(function (rule) {
-            rule.selectors.forEach(function (selector) {
-                if (!isClass(selector)) {
-                    return;
-                }
-
-                var id = makeId(rule, selector);
-
-                if (map[id] && (options.strict ? assertOnDecls(map[id], rule).length : true)) {
-                    var overWrite = {
+        var rules = toArray(root, 'eachRule', function (rule) {
+            return rule.selectors.filter(isClass)
+                .map(function (selector) {
+                    return {
+                        id: makeId(rule, selector),
                         selector: selector,
-                        rule: rule
+                        rule: rule,
+                        line: rule.source.start,
+                        from: rule.source.input.from
                     };
+                });
+        });
 
-                    if (options.strict) {
-                        overWrite.rulesOverwritten = assertOnDecls(map[id], rule, true);
-                    }
+        var mapped = _.flatten(rules).reduce(function (map, rule) {
+            if (map[rule.id] && (options.strict ? assertOnDecls(map[rule.id], rule.rule).length : true)) {
+                var overWrite = rule;
 
-                    map[id].push(overWrite);
-                    return;
+                if (options.strict) {
+                    overWrite.rulesOverwritten = assertOnDecls(map[rule.id], rule.rule, true);
                 }
 
-                map[id] = [{
-                    selector: selector,
-                    rule: rule
-                }];
-            });
-        });
+                map[rule.id].push(rule);
+                return map;
+            }
 
-        var stuff = Object.keys(map).filter(function (selector) {
-            return map[selector].length > 1;
+            map[rule.id] = [rule];
+            return map;
+        }, {});
+
+        var stuff = Object.keys(mapped).filter(function (selector) {
+            return mapped[selector].length > 1;
         }).map(function (selectorName) {
-            return map[selectorName];
+            return mapped[selectorName];
         });
-
-        stuff.toString = function () {
-            var str = '';
-            this.forEach(function (selector) {
-                var first = selector.shift();
-                str += '\n\n';
-                str += colors.green(first.selector) + colors.bold(' defined line ' + first.rule.source.start.line + ':' + first.rule.source.start.column) + ' ' + ' \n';
-
-                selector.forEach(function (sel) {
-                    str += colors.bold.grey('mutated line ' + sel.rule.source.start.line + ':' + sel.rule.source.start.column) + ' ' + colors.red((sel.rulesOverwritten || []).reduce(function (data, over) {
-                        data += over[0] + ': ' + over[1] + ' ';
-                        return data;
-                    }, '')) + '\n';
-                });
-            });
-
-            return str;
-        };
 
         res(stuff);
     });
