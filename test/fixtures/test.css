@@ -11,7 +11,7 @@
 }
 
 .a {
-    color: blue;
+    position: fixed;
 }
 
 
@@ -29,6 +29,10 @@
 
 @media min-width(500px) {
     .b {
-        display: inline-block;
+        background: green;
     }
+}
+
+.c {
+    position: static;
 }

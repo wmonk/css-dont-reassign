@@ -5,11 +5,32 @@ var postcss = require('postcss');
 var fs = require('fs');
 var _ = require('lodash');
 
-function makeId(rule, selector) {
-    return [rule.parent.type, (rule.parent.params || 'root'), selector].join('-');
+function makeId(rule, selector, hash) {
+    return [rule.parent.type, (rule.parent.params || 'root'), selector, hash || ''].join('-');
 }
 
-module.exports = function (filePath) {
+function makeDeclsIntoArray(rule) {
+    var decls = [];
+
+    rule.eachDecl(function (decl) {
+        decls.push(decl.prop);
+    });
+
+    return decls;
+}
+
+function assertOnDecls(mapped, rule) {
+    var mappedDecl = makeDeclsIntoArray(mapped.rules[0].rule);
+    var ruleDecl = makeDeclsIntoArray(rule);
+
+    return _.intersection(mappedDecl, ruleDecl);
+}
+
+module.exports = function (filePath, opts) {
+    var options = _.assign({
+        strict: false
+    }, opts);
+
     return new Promise(function (res, rej) {
         var root = postcss.parse(fs.readFileSync(filePath));
         var map = {};
@@ -22,7 +43,7 @@ module.exports = function (filePath) {
             rule.selectors.forEach(function (selector) {
                 var id = makeId(rule, selector);
 
-                if (map[id]) {
+                if (map[id] && (options.strict ? assertOnDecls(map[id], rule).length : true)) {
                     return map[id].rules.push({
                         selector: selector,
                         rule: rule
