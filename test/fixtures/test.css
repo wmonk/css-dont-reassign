@@ -1,0 +1,22 @@
+.a {
+    color: red;
+}
+
+.b {
+    display: block;
+}
+
+.c {
+    position: absolute;
+}
+
+.a {
+    color: blue;
+}
+
+
+@media min-width(500px) {
+    .b {
+        display: inline;
+    }
+}
