@@ -13,16 +13,6 @@ function isClass(c) {
     return c.charAt(0) === '.';
 }
 
-function makeDeclsIntoArray(rule) {
-    var decls = [];
-
-    rule.eachDecl(function (decl) {
-        decls.push(decl.prop);
-    });
-
-    return decls;
-}
-
 function toArray(root, method, functor) {
     var arr = [];
     root[method](function (rule) {
@@ -31,9 +21,13 @@ function toArray(root, method, functor) {
     return arr.map(functor);
 }
 
+function pluckProp (decl) {
+    return decl.prop;
+}
+
 function assertOnDecls(mapped, rule) {
-    var mappedDecl = makeDeclsIntoArray(mapped[0].rule);
-    var ruleDecl = makeDeclsIntoArray(rule);
+    var mappedDecl = toArray(mapped[0].rule, 'eachDecl', pluckProp);
+    var ruleDecl = toArray(rule, 'eachDecl', pluckProp);
     var intersect = _.intersection(mappedDecl, ruleDecl);
 
     return toArray(rule, 'eachDecl', function (decl) {
