@@ -1,0 +1,12 @@
+{
+    "useGlobalEslint": true,
+    "env": {
+        "browser": true,
+        "node": true,
+        "mocha": true
+    },
+    "rules": {
+        "quotes": [1, "single"],
+        "no-underscore-dangle": [0]
+    }
+}

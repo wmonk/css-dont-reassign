@@ -20,3 +20,15 @@
         display: inline;
     }
 }
+
+@media min-width(600px) {
+    .b {
+        display: static;
+    }
+}
+
+@media min-width(500px) {
+    .b {
+        display: inline-block;
+    }
+}

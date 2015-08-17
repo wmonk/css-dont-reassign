@@ -13,5 +13,8 @@
     "bluebird": "^2.9.34",
     "lodash": "^3.10.1",
     "postcss": "^4.1.16"
+  },
+  "devDependencies": {
+    "chai": "^3.2.0"
   }
 }
