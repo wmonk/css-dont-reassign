@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "eslint index.js test/index.js && mocha"
   },
   "keywords": [],
   "author": "",
