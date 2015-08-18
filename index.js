@@ -10,7 +10,7 @@ function makeId(rule, selector) {
 }
 
 function isClass(c) {
-    return c.charAt(0) === '.';
+    return c.charAt(0) === '.' || c.match(/h[1-6]|div|span|p/);
 }
 
 function toArray(method, root) {
@@ -78,6 +78,24 @@ module.exports = function (filePath, opts) {
                 return map[selectorName];
             });
         }, []);
+
+        mapped.toString = function () {
+            return this.reduce(function (str, issues) {
+                var first = issues.shift();
+                var rest = issues;
+
+                str += first.selector + ' defined on line ' + first.line.line + '\n';
+
+                str += rest.reduce(function (restStr, issue) {
+                    restStr += issue.selector + ' reassigned on line ' + issue.line.line + '\n';
+                    return restStr;
+                }, '');
+
+                str += '\n';
+
+                return str;
+            }, '');
+        };
 
         res(mapped);
     });
