@@ -5,8 +5,8 @@ var postcss = require('postcss');
 var fs = require('fs');
 var _ = require('ramda');
 
-function makeId(rule, selector, hash) {
-    return [rule.parent.type, (rule.parent.params || 'root'), selector, hash || ''].join('-');
+function makeId(rule, selector) {
+    return [rule.parent.type, (rule.parent.params || 'root'), selector].join('-');
 }
 
 function isClass(c) {
