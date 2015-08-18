@@ -3,7 +3,7 @@
 var Promise = require('bluebird');
 var postcss = require('postcss');
 var fs = require('fs');
-var _ = require('lodash');
+var _ = require('ramda');
 
 function makeId(rule, selector, hash) {
     return [rule.parent.type, (rule.parent.params || 'root'), selector, hash || ''].join('-');
@@ -13,24 +13,24 @@ function isClass(c) {
     return c.charAt(0) === '.';
 }
 
-function toArray(root, method, functor) {
+function toArray(method, root) {
     var arr = [];
     root[method](function (rule) {
         arr.push(rule);
     });
-    return arr.map(functor);
+    return arr;
 }
 
-function pluckProp (decl) {
-    return decl.prop;
-}
+var eachDecl = _.curry(toArray, 2)('eachDecl');
+var eachRule = _.curry(toArray, 2)('eachRule');
+var pluckProp = _.compose(_.pluck('prop'), eachDecl);
 
 function assertOnDecls(mapped, rule) {
-    var mappedDecl = toArray(mapped[0].rule, 'eachDecl', pluckProp);
-    var ruleDecl = toArray(rule, 'eachDecl', pluckProp);
+    var mappedDecl = pluckProp(mapped[0].rule);
+    var ruleDecl = pluckProp(rule);
     var intersect = _.intersection(mappedDecl, ruleDecl);
 
-    return toArray(rule, 'eachDecl', function (decl) {
+    return eachDecl(rule).map(function (decl) {
         return [decl.prop, decl.value];
     }).filter(function (def) {
         return intersect.indexOf(def[0]) > -1;
@@ -38,14 +38,14 @@ function assertOnDecls(mapped, rule) {
 }
 
 module.exports = function (filePath, opts) {
-    var options = _.assign({
+    var options = _.merge({
         strict: false
     }, opts);
 
     return new Promise(function (res) {
         var root = postcss.parse(fs.readFileSync(filePath));
 
-        var rules = toArray(root, 'eachRule', function (rule) {
+        var rules = eachRule(root).map(function (rule) {
             return rule.selectors.filter(isClass)
                 .map(function (selector) {
                     return {
