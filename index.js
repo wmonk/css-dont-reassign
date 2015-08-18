@@ -30,10 +30,8 @@ function assertOnDecls(mapped, rule) {
     var ruleDecl = pluckProp(rule);
     var intersect = _.intersection(mappedDecl, ruleDecl);
 
-    return eachDecl(rule).map(function (decl) {
-        return [decl.prop, decl.value];
-    }).filter(function (def) {
-        return intersect.indexOf(def[0]) > -1;
+    return _.project(['prop', 'value'])(eachDecl(rule)).filter(function (def) {
+        return intersect.indexOf(def.prop) > -1;
     });
 }
 
@@ -63,7 +61,7 @@ module.exports = function (filePath, opts) {
 
             if (mappedValue[rule.id] && (options.strict ? assertOnDecls(mappedValue[rule.id], rule.rule).length : true)) {
                 var overWrite = rule;
-                overWrite.rulesOverwritten = assertOnDecls(mappedValue[rule.id], rule.rule, true);
+                overWrite.rulesOverwritten = assertOnDecls(mappedValue[rule.id], rule.rule);
 
                 mappedValue[rule.id].push(rule);
                 return map;
@@ -81,8 +79,8 @@ module.exports = function (filePath, opts) {
 
         mapped.toString = function () {
             return this.reduce(function (str, issues) {
-                var first = issues.shift();
-                var rest = issues;
+                var first = _.head(issues);
+                var rest = _.tail(issues);
 
                 str += first.selector + ' defined on line ' + first.line.line + '\n';
 
