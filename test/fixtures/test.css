@@ -14,7 +14,6 @@
     position: fixed;
 }
 
-
 @media min-width(500px) {
     .b {
         display: inline;

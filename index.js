@@ -9,8 +9,8 @@ function makeId(rule, selector) {
     return [rule.parent.type, (rule.parent.params || 'root'), selector].join('-');
 }
 
-function isClass(c) {
-    return c.charAt(0) === '.' || c.match(/h[1-6]|div|span|p/);
+function isClass(predicate, c) {
+    return c.match(predicate) && (c.charAt(0) === '.' || c.match(/h[1-6]|div|span|p/));
 }
 
 function toArray(method, root) {
@@ -37,14 +37,16 @@ function assertOnDecls(mapped, rule) {
 
 module.exports = function (filePath, opts) {
     var options = _.merge({
-        strict: false
+        classMatch: new RegExp(/.+/g)
     }, opts);
+
+    var matchesUserInput = _.curry(isClass)(options.classMatch);
 
     return new Promise(function (res) {
         var root = postcss.parse(fs.readFileSync(filePath));
 
         var rules = eachRule(root).map(function (rule) {
-            return rule.selectors.filter(isClass)
+            return rule.selectors.filter(matchesUserInput)
                 .map(function (selector) {
                     return {
                         id: makeId(rule, selector),
@@ -59,7 +61,7 @@ module.exports = function (filePath, opts) {
         var mapped = _.flatten(rules).reduce(function (map, rule) {
             var mappedValue = map[0];
 
-            if (mappedValue[rule.id] && (options.strict ? assertOnDecls(mappedValue[rule.id], rule.rule).length : true)) {
+            if (mappedValue[rule.id]) {
                 var overWrite = rule;
                 overWrite.rulesOverwritten = assertOnDecls(mappedValue[rule.id], rule.rule);
 

@@ -24,12 +24,12 @@ describe('Do Not Mutate', function () {
     });
 
     describe('allow options', function () {
-        it('should allow strict', function (done) {
-            dontOverwrite(path.join(__dirname, './fixtures/test.css'), {
-                strict: true
+        it('should allow classMatch', function (done) {
+            dontOverwrite(path.join(__dirname, './fixtures/classMatch.css'), {
+                classMatch: /\.comp-/
             }).then(function (result) {
-                result[0][0].selector.should.equal('.c');
-                result[0][1].selector.should.equal('.c');
+                result[0][0].selector.should.equal('.comp-one');
+                result[0][1].selector.should.equal('.comp-one');
 
                 done();
             }).catch(done);
