@@ -1,6 +1,6 @@
 {
   "name": "css-dont-reassign",
-  "version": "0.8",
+  "version": "0.8.0",
   "description": "",
   "main": "index.js",
   "scripts": {
