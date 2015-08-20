@@ -1,5 +1,5 @@
 {
-  "name": "css-reassign",
+  "name": "css-dont-reassign",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
