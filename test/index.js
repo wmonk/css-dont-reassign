@@ -28,6 +28,7 @@ describe('Do Not Mutate', function () {
             dontOverwrite(path.join(__dirname, './fixtures/classMatch.css'), {
                 classMatch: /\.comp-/
             }).then(function (result) {
+                result.length.should.equal(1);
                 result[0][0].selector.should.equal('.comp-one');
                 result[0][1].selector.should.equal('.comp-one');
 
